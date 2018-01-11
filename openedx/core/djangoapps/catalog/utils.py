@@ -179,7 +179,7 @@ def get_localized_price_text(price, request):
     if user_location and get_currency_data:
         currency_data = get_currency_data()
         user_country = pycountry.countries.get(alpha2=user_location)
-        user_currency = currency_data[user_country.alpha3] or user_currency
+        user_currency = currency_data.get(user_country.alpha3, user_currency)
 
     return format_price(
         price=(price * user_currency['rate']),
