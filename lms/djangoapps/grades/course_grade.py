@@ -19,15 +19,23 @@ class CourseGradeBase(object):
     """
     Base class for Course Grades.
     """
-    def __init__(self, user, course_data, percent=0.0, letter_grade=None, force_update_subsections=False):
+    def __init__(self, user, course_data, percent=0.0, letter_grade=None, passed=False, force_update_subsections=False):
         self.user = user
         self.course_data = course_data
 
         self.percent = percent
+        self.passed = passed
 
         # Convert empty strings to None when reading from the table
         self.letter_grade = letter_grade or None
         self.force_update_subsections = force_update_subsections
+
+    def __unicode__(self):
+        return u'Course Grade: percent: {}, letter_grade: {}, passed: {}'.format(
+            unicode(self.percent),
+            self.letter_grade,
+            self.passed,
+        )
 
     @property
     def attempted(self):
@@ -236,13 +244,6 @@ class CourseGrade(CourseGradeBase):
         super(CourseGrade, self).__init__(user, course_data, *args, **kwargs)
         self.passed = self._compute_passed(course_data.course.grade_cutoffs, self.percent)
         self._subsection_grade_factory = SubsectionGradeFactory(user, course_data=course_data)
-
-    def __unicode__(self):
-        return u'Course Grade: percent: {}, letter_grade: {}, passed: {}'.format(
-            unicode(self.percent),
-            self.letter_grade,
-            self.passed,
-        )
 
     def update(self):
         """
