@@ -14,6 +14,7 @@ from pkg_resources import (
     resource_string,
     resource_isdir,
 )
+from web_fragments.fragment import Fragment
 from webob import Response
 from webob.multidict import MultiDict
 from lazy import lazy
@@ -25,7 +26,6 @@ from xblock.fields import (
     ReferenceValueDict, UserScope
 )
 
-from xblock.fragment import Fragment
 from xblock.runtime import Runtime, IdReader, IdGenerator
 from xmodule import block_metadata_utils
 from xmodule.fields import RelativeTime
@@ -249,7 +249,7 @@ class HTMLSnippet(object):
 
 def shim_xmodule_js(block, fragment):
     """
-    Set up the XBlock -> XModule shim on the supplied :class:`xblock.fragment.Fragment`
+    Set up the XBlock -> XModule shim on the supplied :class:`web_fragments.fragment.Fragment`
     """
     if not fragment.js_init_fn:
         fragment.initialize_js('XBlockToXModuleShim')
@@ -936,7 +936,7 @@ def policy_key(location):
     Get the key for a location in a policy file.  (Since the policy file is
     specific to a course, it doesn't need the full location url).
     """
-    return u'{cat}/{name}'.format(cat=location.category, name=location.name)
+    return u'{cat}/{name}'.format(cat=location.block_type, name=location.block_id)
 
 
 Template = namedtuple("Template", "metadata data children")

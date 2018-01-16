@@ -38,7 +38,6 @@ from path import Path as path
 from warnings import simplefilter
 from django.utils.translation import ugettext_lazy as _
 
-from .discussionsettings import *
 from openedx.core.djangoapps.theming.helpers_dirs import (
     get_themes_unchecked,
     get_theme_base_dirs_from_settings
@@ -522,16 +521,17 @@ OAUTH_EXPIRE_PUBLIC_CLIENT_DAYS = 30
 ################################## DJANGO OAUTH TOOLKIT #######################################
 
 OAUTH2_PROVIDER = {
-    'OAUTH2_VALIDATOR_CLASS': 'openedx.core.djangoapps.oauth_dispatch.dot_overrides.EdxOAuth2Validator',
+    'OAUTH2_VALIDATOR_CLASS': 'openedx.core.djangoapps.oauth_dispatch.dot_overrides.validators.EdxOAuth2Validator',
     'REFRESH_TOKEN_EXPIRE_SECONDS': 20160,
     'SCOPES': {
-        'read': 'Read scope',
-        'write': 'Write scope',
-        'email': 'Email scope',
+        'read': 'Read access',
+        'write': 'Write access',
+        'email': 'Know your email address',
         # conform profile scope message that is presented to end-user
         # to lms/templates/provider/authorize.html. This may be revised later.
-        'profile': 'Read your user profile',
+        'profile': 'Know your name and username',
     },
+    'REQUEST_APPROVAL_PROMPT': 'auto_even_if_expired',
 }
 # This is required for the migrations in oauth_dispatch.models
 # otherwise it fails saying this attribute is not present in Settings
@@ -2016,14 +2016,6 @@ BULK_EMAIL_LOG_SENT_EMAILS = False
 # parallel, and what the SES rate is.
 BULK_EMAIL_RETRY_DELAY_BETWEEN_SENDS = 0.02
 
-############################# Persistent Grades ####################################
-
-# Queue to use for updating persistent grades
-RECALCULATE_GRADES_ROUTING_KEY = LOW_PRIORITY_QUEUE
-
-# Queue to use for updating grades due to grading policy change
-POLICY_CHANGE_GRADES_ROUTING_KEY = LOW_PRIORITY_QUEUE
-
 ############################# Email Opt In ####################################
 
 # Minimum age for organization-wide email opt in
@@ -2106,9 +2098,6 @@ INSTALLED_APPS = [
     # For content serving
     'openedx.core.djangoapps.contentserver',
 
-    # Theming
-    'openedx.core.djangoapps.theming.apps.ThemingConfig',
-
     # Site configuration for theming and behavioral modification
     'openedx.core.djangoapps.site_configuration',
 
@@ -2137,7 +2126,6 @@ INSTALLED_APPS = [
     'openedx.core.djangoapps.course_groups',
     'bulk_email',
     'branding',
-    'lms.djangoapps.grades.apps.GradesConfig',
 
     # Signals
     'openedx.core.djangoapps.signals.apps.SignalConfig',
@@ -2345,8 +2333,6 @@ INSTALLED_APPS = [
     'database_fixups',
 
     'openedx.core.djangoapps.waffle_utils',
-    'openedx.core.djangoapps.ace_common.apps.AceCommonConfig',
-    'openedx.core.djangoapps.schedules.apps.SchedulesConfig',
 
     # Course Goals
     'lms.djangoapps.course_goals',
@@ -3405,8 +3391,10 @@ ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE = 512   # Enterprise logo image size limit i
 ENTERPRISE_PLATFORM_WELCOME_TEMPLATE = _(u'Welcome to {platform_name}.')
 ENTERPRISE_SPECIFIC_BRANDED_WELCOME_TEMPLATE = _(
     u'{start_bold}{enterprise_name}{end_bold} has partnered with {start_bold}'
-    '{platform_name}{end_bold} to offer you high-quality learning opportunities '
-    'from the world\'s best universities.'
+    '{platform_name}{end_bold} to  offer you always available, high-quality learning '
+    'programs to help you advance your knowledge and your career. '
+    '{line_break}Please continue with registration, or log in if you are an existing user, '
+    'and press continue to start learning.'
 )
 ENTERPRISE_TAGLINE = ''
 ENTERPRISE_EXCLUDED_REGISTRATION_FIELDS = {
@@ -3444,20 +3432,6 @@ COURSES_API_CACHE_TIMEOUT = 3600  # Value is in seconds
 COURSEGRAPH_JOB_QUEUE = LOW_PRIORITY_QUEUE
 
 
-############## Settings for ACE ####################################
-ACE_ENABLED_CHANNELS = [
-    'file_email'
-]
-ACE_ENABLED_POLICIES = [
-    'bulk_email_optout'
-]
-ACE_CHANNEL_SAILTHRU_DEBUG = True
-ACE_CHANNEL_SAILTHRU_TEMPLATE_NAME = 'Automated Communication Engine Email'
-ACE_CHANNEL_SAILTHRU_API_KEY = None
-ACE_CHANNEL_SAILTHRU_API_SECRET = None
-
-ACE_ROUTING_KEY = LOW_PRIORITY_QUEUE
-
 # Initialize to 'unknown', but read from JSON in aws.py
 EDX_PLATFORM_REVISION = 'unknown'
 
@@ -3466,3 +3440,13 @@ EDX_PLATFORM_REVISION = 'unknown'
 # Once a user has watched this percentage of a video, mark it as complete:
 # (0.0 = 0%, 1.0 = 100%)
 COMPLETION_VIDEO_COMPLETE_PERCENTAGE = 0.95
+
+############### Settings for Django Rate limit #####################
+RATELIMIT_ENABLE = True
+RATELIMIT_RATE = '30/m'
+
+############## Plugin Django Apps #########################
+
+from openedx.core.djangolib.django_plugins import DjangoAppRegistry, ProjectType, SettingsType
+INSTALLED_APPS.extend(DjangoAppRegistry.get_plugin_apps(ProjectType.LMS))
+DjangoAppRegistry.add_plugin_settings(__name__, ProjectType.LMS, SettingsType.COMMON)

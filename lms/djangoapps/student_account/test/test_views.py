@@ -687,6 +687,7 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             expected_message = welcome_message.format(
                 start_bold=u'<b>',
                 end_bold=u'</b>',
+                line_break=u'<br/>',
                 enterprise_name=ec_name,
                 platform_name=settings.PLATFORM_NAME
             )
@@ -795,6 +796,7 @@ class StudentAccountLoginAndRegistrationTest(ThirdPartyAuthTestMixin, UrlResetMi
             'errorMessage': expected_error_message,
             'registerFormSubmitButtonText': 'Create Account',
             'syncLearnerProfileData': False,
+            'pipeline_user_details': {'response': {'idp_name': 'testshib'}}
         }
         auth_info = dump_js_escaped_json(auth_info)
 

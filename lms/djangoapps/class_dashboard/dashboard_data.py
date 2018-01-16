@@ -7,6 +7,7 @@ from django.db.models import Count
 from django.utils.translation import ugettext as _
 
 from opaque_keys.edx.locations import Location
+from six import text_type
 
 from courseware import models
 from instructor_analytics.csvs import create_csv_response
@@ -169,7 +170,7 @@ def get_d3_problem_grade_distrib(course_id):
                 for child in unit.get_children():
 
                     # Student data is at the problem level
-                    if child.location.category == 'problem':
+                    if child.location.block_type == 'problem':
                         c_problem += 1
                         stack_data = []
 
@@ -214,7 +215,7 @@ def get_d3_problem_grade_distrib(course_id):
                                     'color': percent,
                                     'value': count_grade,
                                     'tooltip': tooltip,
-                                    'module_url': child.location.to_deprecated_string(),
+                                    'module_url': text_type(child.location),
                                 })
 
                         problem = {
@@ -276,7 +277,7 @@ def get_d3_sequential_open_distrib(course_id):
                 'color': 0,
                 'value': num_students,
                 'tooltip': tooltip,
-                'module_url': subsection.location.to_deprecated_string(),
+                'module_url': text_type(subsection.location),
             })
             subsection = {
                 'xValue': "SS {0}".format(c_subsection),
@@ -326,11 +327,11 @@ def get_d3_section_grade_distrib(course_id, section):
             c_unit += 1
             c_problem = 0
             for child in unit.get_children():
-                if child.location.category == 'problem':
+                if child.location.block_type == 'problem':
                     c_problem += 1
                     problem_set.append(child.location)
                     problem_info[child.location] = {
-                        'id': child.location.to_deprecated_string(),
+                        'id': text_type(child.location),
                         'x_value': "P{0}.{1}.{2}".format(c_subsection, c_unit, c_problem),
                         'display_name': own_metadata(child).get('display_name', ''),
                     }
@@ -413,7 +414,7 @@ def get_array_section_has_problem(course_id):
         for subsection in section.get_children():
             for unit in subsection.get_children():
                 for child in unit.get_children():
-                    if child.location.category == 'problem':
+                    if child.location.block_type == 'problem':
                         b_section_has_problem[i] = True
                         break  # out of child loop
                 if b_section_has_problem[i]:

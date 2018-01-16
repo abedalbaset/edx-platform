@@ -25,9 +25,10 @@ from nose.plugins.attrib import attr
 from opaque_keys.edx.keys import CourseKey
 from opaque_keys.edx.locations import Location
 from pytz import UTC
+from six import text_type
+from web_fragments.fragment import Fragment
 from xblock.core import XBlock
 from xblock.fields import Scope, String
-from xblock.fragment import Fragment
 
 import courseware.views.views as views
 import shoppingcart
@@ -99,21 +100,6 @@ class TestJumpTo(ModuleStoreTestCase):
         jumpto_url = '{0}/{1}/jump_to/{2}'.format('/courses', unicode(self.course_key), unicode(location))
         response = self.client.get(jumpto_url)
         self.assertEqual(response.status_code, 404)
-
-    @unittest.skip
-    def test_jumpto_from_chapter(self):
-        location = self.course_key.make_usage_key('chapter', 'Overview')
-        jumpto_url = '{0}/{1}/jump_to/{2}'.format('/courses', unicode(self.course_key), unicode(location))
-        expected = 'courses/edX/toy/2012_Fall/courseware/Overview/'
-        response = self.client.get(jumpto_url)
-        self.assertRedirects(response, expected, status_code=302, target_status_code=302)
-
-    @unittest.skip
-    def test_jumpto_id(self):
-        jumpto_url = '{0}/{1}/jump_to_id/{2}'.format('/courses', unicode(self.course_key), 'Overview')
-        expected = 'courses/edX/toy/2012_Fall/courseware/Overview/'
-        response = self.client.get(jumpto_url)
-        self.assertRedirects(response, expected, status_code=302, target_status_code=302)
 
     def test_jumpto_from_section(self):
         course = CourseFactory.create()
@@ -239,8 +225,8 @@ class IndexQueryTestCase(ModuleStoreTestCase):
                     'courseware_section',
                     kwargs={
                         'course_id': unicode(course.id),
-                        'chapter': unicode(chapter.location.name),
-                        'section': unicode(section.location.name),
+                        'chapter': unicode(chapter.location.block_id),
+                        'section': unicode(section.location.block_id),
                     }
                 )
                 response = self.client.get(url)
@@ -359,8 +345,8 @@ class ViewsTestCase(ModuleStoreTestCase):
             'courseware_section',
             kwargs={
                 'course_id': unicode(self.course_key),
-                'chapter': unicode(self.chapter.location.name) if chapter_name is None else chapter_name,
-                'section': unicode(self.section2.location.name) if section_name is None else section_name,
+                'chapter': unicode(self.chapter.location.block_id) if chapter_name is None else chapter_name,
+                'section': unicode(self.section2.location.block_id) if section_name is None else section_name,
             }
         )
         response = self.client.get(url)
@@ -379,7 +365,7 @@ class ViewsTestCase(ModuleStoreTestCase):
 
         url = reverse(
             'courseware_chapter',
-            kwargs={'course_id': unicode(self.course.id), 'chapter': unicode(self.chapter.location.name)},
+            kwargs={'course_id': unicode(self.course.id), 'chapter': unicode(self.chapter.location.block_id)},
         )
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
@@ -402,8 +388,8 @@ class ViewsTestCase(ModuleStoreTestCase):
             'courseware_section',
             kwargs={
                 'course_id': unicode(self.course_key),
-                'chapter': unicode(self.chapter.location.name),
-                'section': unicode(self.section.location.name),
+                'chapter': unicode(self.chapter.location.block_id),
+                'section': unicode(self.section.location.block_id),
             }
         )
         # create the url for enroll_staff view
@@ -533,16 +519,16 @@ class ViewsTestCase(ModuleStoreTestCase):
         # test the course location
         self.assertEqual(
             u'/courses/{course_key}/courseware?{activate_block_id}'.format(
-                course_key=self.course_key.to_deprecated_string(),
-                activate_block_id=urlencode({'activate_block_id': self.course.location.to_deprecated_string()})
+                course_key=text_type(self.course_key),
+                activate_block_id=urlencode({'activate_block_id': text_type(self.course.location)})
             ),
             get_redirect_url(self.course_key, self.course.location),
         )
         # test a section location
         self.assertEqual(
             u'/courses/{course_key}/courseware/Chapter_1/Sequential_1/?{activate_block_id}'.format(
-                course_key=self.course_key.to_deprecated_string(),
-                activate_block_id=urlencode({'activate_block_id': self.section.location.to_deprecated_string()})
+                course_key=text_type(self.course_key),
+                activate_block_id=urlencode({'activate_block_id': text_type(self.section.location)})
             ),
             get_redirect_url(self.course_key, self.section.location),
         )
@@ -560,8 +546,8 @@ class ViewsTestCase(ModuleStoreTestCase):
             '/courses',
             unicode(self.course.id),
             'courseware',
-            self.chapter.location.name,
-            self.section.location.name,
+            self.chapter.location.block_id,
+            self.section.location.block_id,
             'f'
         ])
         self.assertTrue(self.client.login(username=self.user.username, password=TEST_PASSWORD))
@@ -573,8 +559,8 @@ class ViewsTestCase(ModuleStoreTestCase):
             '/courses',
             unicode(self.course.id),
             'courseware',
-            self.chapter.location.name,
-            self.section.location.name,
+            self.chapter.location.block_id,
+            self.section.location.block_id,
             '1'
         ]
         self.assertTrue(self.client.login(username=self.user.username, password=TEST_PASSWORD))
@@ -590,22 +576,6 @@ class ViewsTestCase(ModuleStoreTestCase):
         # TODO add a test for no data *
         response = self.client.get(reverse('jump_to', args=['foo/bar/baz', 'baz']))
         self.assertEquals(response.status_code, 404)
-
-    @unittest.skip
-    def test_no_end_on_about_page(self):
-        # Toy course has no course end date or about/end_date blob
-        self.verify_end_date('edX/toy/TT_2012_Fall')
-
-    @unittest.skip
-    def test_no_end_about_blob(self):
-        # test_end has a course end date, no end_date HTML blob
-        self.verify_end_date("edX/test_end/2012_Fall", "Sep 17, 2015")
-
-    @unittest.skip
-    def test_about_blob_end_date(self):
-        # test_about_blob_end_date has both a course end date and an end_date HTML blob.
-        # HTML blob wins
-        self.verify_end_date("edX/test_about_blob_end_date/2012_Fall", "Learning never ends")
 
     def verify_end_date(self, course_id, expected_end_text=None):
         """
@@ -1190,20 +1160,6 @@ class StartDateTests(ModuleStoreTestCase):
         # The start date is set in the set_up_course function above.
         # This should return in the format '%Y-%m-%dT%H:%M:%S%z'
         self.assertContains(response, "2013-09-16T07:17:28+0000")
-
-    @patch(
-        'util.date_utils.pgettext',
-        fake_pgettext(translations={("abbreviated month name", "Jul"): "JULY", })
-    )
-    @patch(
-        'util.date_utils.ugettext',
-        fake_ugettext(translations={"SHORT_DATE_FORMAT": "%Y-%b-%d", })
-    )
-    @unittest.skip
-    def test_format_localized_in_xml_course(self):
-        response = self.get_about_response(CourseKey.fron_string('edX/toy/TT_2012_Fall'))
-        # The start date is set in common/test/data/two_toys/policies/TT_2012_Fall/policy.json
-        self.assertContains(response, "2015-JULY-17")
 
 
 # pylint: disable=protected-access, no-member
@@ -2560,8 +2516,8 @@ class TestIndexViewCrawlerStudentStateWrites(SharedModuleStoreTestCase):
             'courseware_section',
             kwargs={
                 'course_id': unicode(self.course.id),
-                'chapter': unicode(self.chapter.location.name),
-                'section': unicode(self.section.location.name),
+                'chapter': unicode(self.chapter.location.block_id),
+                'section': unicode(self.section.location.block_id),
             }
         )
         response = self.client.get(url, HTTP_USER_AGENT=user_agent)

@@ -13,6 +13,7 @@ from xmodule import block_metadata_utils
 from .config import assume_zero_if_absent
 from .subsection_grade import ZeroSubsectionGrade
 from .subsection_grade_factory import SubsectionGradeFactory
+from .scores import compute_percent
 
 
 class CourseGradeBase(object):
@@ -108,9 +109,9 @@ class CourseGradeBase(object):
                 problem_scores.update(subsection_grade.problem_scores)
         return problem_scores
 
-    def score_for_chapter(self, chapter_key):
+    def chapter_percentage(self, chapter_key):
         """
-        Returns the aggregate weighted score for the given chapter.
+        Returns the rounded aggregate weighted percentage for the given chapter.
         Raises:
             KeyError if the chapter is not found.
         """
@@ -119,7 +120,7 @@ class CourseGradeBase(object):
         for section in chapter_grade['sections']:
             earned += section.graded_total.earned
             possible += section.graded_total.possible
-        return earned, possible
+        return compute_percent(earned, possible)
 
     def score_for_module(self, location):
         """
@@ -278,7 +279,7 @@ class CourseGrade(CourseGradeBase):
 
     def _get_subsection_grade(self, subsection, force_update_subsections=False):
         if self.force_update_subsections:
-            return self._subsection_grade_factory.update(subsection, force_update_subsections)
+            return self._subsection_grade_factory.update(subsection, force_update_subsections=force_update_subsections)
         else:
             # Pass read_only here so the subsection grades can be persisted in bulk at the end.
             return self._subsection_grade_factory.create(subsection, read_only=True)

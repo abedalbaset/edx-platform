@@ -19,6 +19,7 @@ from contextlib import contextmanager, nested
 from functools import wraps
 from mock import Mock
 from path import Path as path
+from six import text_type
 
 from opaque_keys.edx.keys import CourseKey
 from xblock.field_data import DictFieldData
@@ -548,11 +549,11 @@ class CourseComparisonTest(BulkAssertionTest):
                 actual_item_location = actual_course_key.make_usage_key(expected_item.category, expected_item.location.block_id)
                 # split and old mongo use different names for the course root but we don't know which
                 # modulestore actual's come from here; so, assume old mongo and if that fails, assume split
-                if expected_item.location.category == 'course':
+                if expected_item.location.block_type == 'course':
                     actual_item_location = actual_item_location.replace(name=actual_item_location.run)
                 actual_item = actual_item_map.get(map_key(actual_item_location))
                 # must be split
-                if actual_item is None and expected_item.location.category == 'course':
+                if actual_item is None and expected_item.location.block_type == 'course':
                     actual_item_location = actual_item_location.replace(name='course')
                     actual_item = actual_item_map.get(map_key(actual_item_location))
 
@@ -610,8 +611,8 @@ class CourseComparisonTest(BulkAssertionTest):
 
         expected_filename = expected_asset.pop('filename')
         actual_filename = actual_asset.pop('filename')
-        self.assertEqual(expected_key.to_deprecated_string(), expected_filename)
-        self.assertEqual(actual_key.to_deprecated_string(), actual_filename)
+        self.assertEqual(text_type(expected_key), expected_filename)
+        self.assertEqual(text_type(actual_key), actual_filename)
         self.assertEqual(expected_asset, actual_asset)
 
     def _assertAssetsEqual(self, expected_course_key, expected_assets, actual_course_key, actual_assets):  # pylint: disable=invalid-name

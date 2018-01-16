@@ -93,6 +93,7 @@ def get_enterprise_sidebar_context(enterprise_customer):
     branded_welcome_string = branded_welcome_template.format(
         start_bold=u'<b>',
         end_bold=u'</b>',
+        line_break=u'<br/>',
         enterprise_name=enterprise_customer['name'],
         platform_name=platform_name
     )
@@ -136,25 +137,15 @@ def update_third_party_auth_context_for_enterprise(request, context, enterprise_
          context (dict): Updated context of third party auth with modified
          `errorMessage`.
     """
-    if enterprise_customer and context['data']['third_party_auth']['errorMessage']:
+    if context['data']['third_party_auth']['errorMessage']:
         context['data']['third_party_auth']['errorMessage'] = Text(_(
             u'We are sorry, you are not authorized to access {platform_name} via this channel. '
-            u'Please contact your {enterprise} administrator in order to access {platform_name} '
-            u'or contact {edx_support_link}.{line_break}'
-            u'{line_break}'
+            u'Please contact your learning administrator or manager in order to access {platform_name}.'
+            u'{line_break}{line_break}'
             u'Error Details:{line_break}{error_message}')
         ).format(
             platform_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
-            enterprise=enterprise_customer['name'],
             error_message=context['data']['third_party_auth']['errorMessage'],
-            edx_support_link=HTML(
-                '<a href="{edx_support_url}">{support_url_name}</a>'
-            ).format(
-                edx_support_url=configuration_helpers.get_value(
-                    'SUPPORT_SITE_LINK', settings.SUPPORT_SITE_LINK
-                ),
-                support_url_name=_('edX Support'),
-            ),
             line_break=HTML('<br/>')
         )
 

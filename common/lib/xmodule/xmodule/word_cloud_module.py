@@ -10,8 +10,8 @@ import json
 import logging
 
 from pkg_resources import resource_string
+from web_fragments.fragment import Fragment
 from xblock.fields import Boolean, Dict, Integer, List, Scope, String
-from xblock.fragment import Fragment
 
 from xmodule.editing_module import MetadataOnlyEditingDescriptor
 from xmodule.raw_module import EmptyDataRawDescriptor
@@ -244,7 +244,7 @@ class WordCloudModule(WordCloudFields, XModule):
             'ajax_url': self.system.ajax_url,
             'display_name': self.display_name,
             'instructions': self.instructions,
-            'element_class': self.location.category,
+            'element_class': self.location.block_type,
             'element_id': self.location.html_id(),
             'num_inputs': self.num_inputs,
             'submitted': self.submitted,
