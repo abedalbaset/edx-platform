@@ -93,6 +93,7 @@ def get_enterprise_sidebar_context(enterprise_customer):
     branded_welcome_string = branded_welcome_template.format(
         start_bold=u'<b>',
         end_bold=u'</b>',
+        line_break=u'<br/>',
         enterprise_name=enterprise_customer['name'],
         platform_name=platform_name
     )
